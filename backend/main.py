@@ -1,70 +1,64 @@
-from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
-class TripRequest(BaseModel):
-    destination: str
-    days: int
-    budget: float
+from models.trip import Trip
+from database import SessionLocal, init_db
 
-
-app = FastAPI()
-
-
-# a GET endpoint at the root path
-@app.get("/")
-def home():
-    return {
-        "message": "Welcome to KelanaAI"
-    }
-
-# GET Health endpoint at the root path
-@app.get("/health")
-def home():
-    return {"status": "OK"}
-
-
-# GET endpoint — returns recommended tourist places
-@app.get("/api/v1/recommendations")
-def get_recommendations(destination: str = "Japan"):
-    return get_recommended_places(destination)
-
-
-# GET endpoint — returns transportation recommendation
-# @app.get("/api/v1/transportations")
-# def get_transportations(category: str):
-#     return get_transportation_recommendation(category)
-@app.get("/api/v1/transportations")
-def get_transportations():
-    categories = ["Backpacker", "Standard", "Luxury"]
-
-    return [
-        get_transportation_recommendation(category)
-        for category in categories
-    ]
-
-
+# import sesuai lokasi fungsi Anda
 from services.trip_service import (
     calculate_daily_budget,
     get_trip_category,
-    get_transportation_recommendation,
-    get_recommended_places
 )
 
+app = FastAPI()
 
-# POST endpoint — receives JSON, returns JSON
+init_db()
+
+
 @app.post("/api/v1/trips")
 def create_trip(request: TripRequest):
-    daily_budget = calculate_daily_budget(
-        request.budget, request.days
+    # reuse Session 2 business logic
+    daily_budget = calculate_daily_budget(request.budget, request.days)
+    category = get_trip_category(request.budget)
+
+    # create a Trip ORM object
+    trip = Trip(
+        destination=request.destination,
+        days=request.days,
+        budget=request.budget,
+        category=category,
+        daily_budget=daily_budget,
     )
 
-    category = get_trip_category(
-        request.budget
-    )
+    # save to PostgreSQL
+    db = SessionLocal()
+    db.add(trip)
+    db.commit()
+    db.refresh(trip)
+    db.close()
 
-    return {
-        "destination": request.destination,
-        "budget": request.budget,
-        "daily_budget": daily_budget,
-        "category": category,
-    }
+    return trip
+
+
+@app.get("/api/v1/trips")
+def list_trips():
+    db = SessionLocal()
+    trips = db.query(Trip).all()
+    db.close()
+
+    return trips
+
+
+@app.get("/api/v1/trips/{trip_id}")
+def get_trip(trip_id: int):
+    db = SessionLocal()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    db.close()
+
+    # handling not found
+    if trip is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Trip with id {trip_id} not found"
+        )
+
+    return trip
