@@ -9,7 +9,6 @@ backend/.env
 README.md
 DIAGRAM_ARSITEKTUR_KELANA_AI.md
 WORKFLOW_KELANA_AI.md
-backend/services/bedrock_service.py
 backend/__pycache__/test.cpython-314.pyc
 
 
