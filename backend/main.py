@@ -149,3 +149,25 @@ def delete_trip(trip_id: int):
     db.close()
 
     return {"message": f"Trip with id {trip_id} deleted successfully"}
+
+# POST endpoint – generate & persist AI recommendation for an existing trip
+@app.post("/api/v1/trips/{trip_id}/generate")
+def generate_trip_recommendation(trip_id: int):
+    db = SessionLocal()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        db.close()
+        raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} not found")
+
+    ai_rec = get_ai_recommendation(
+        days=trip.days,
+        destination=trip.destination,
+        budget=trip.budget,
+        travel_style=trip.travel_style,
+    )
+
+    trip.ai_recommendation = ai_rec
+    db.commit()
+    db.refresh(trip)
+    db.close()
+    return trip
