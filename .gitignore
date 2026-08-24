@@ -1,0 +1,15 @@
+backend/main copy 2.py
+backend/main_API.py
+backend/main_not_used.py
+backend/test.py
+backend/__pycache__/main.cpython-314.pyc
+backend/services/__pycache__/trip_service.cpython-314.pyc
+backend/main_session2_NOT_USED.py
+backend/.env
+README.md
+DIAGRAM_ARSITEKTUR_KELANA_AI.md
+WORKFLOW_KELANA_AI.md
+backend/services/bedrock_service.py
+backend/__pycache__/test.cpython-314.pyc
+
+
