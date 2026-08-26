@@ -78,14 +78,19 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen px-6 py-16 bg-background">
+    /*
+     * Root: flex-col, full viewport height, horizontally centred.
+     * px-4 on mobile → px-6 on sm → px-8 on md to breathe on wider screens.
+     * py-12 on mobile → py-16 on sm.
+     */
+    <main className="flex flex-col items-center min-h-screen w-full px-4 sm:px-6 md:px-8 py-12 sm:py-16 bg-background">
 
       {/* ── Hero header ── */}
-      <header className="text-center mb-16 max-w-lg">
+      <header className="flex flex-col items-center text-center w-full max-w-lg mb-12 sm:mb-16">
         <p className="text-xs font-semibold tracking-[0.2em] uppercase text-accent mb-4">
           AI Travel Planner
         </p>
-        <h1 className="text-5xl font-bold tracking-tight text-text-primary text-balance mb-4">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-primary text-balance mb-4">
           KelanaAI
         </h1>
         <p className="text-base leading-relaxed text-text-secondary">
@@ -97,9 +102,10 @@ export default function Home() {
       {/* ── Form card ── */}
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md flex flex-col gap-6 bg-surface rounded-2xl p-8"
+        className="flex flex-col w-full max-w-md gap-6 bg-surface rounded-2xl p-6 sm:p-8"
         style={{ boxShadow: "var(--shadow-card)" }}
       >
+        {/* Destination — always full width */}
         <Field label="Destination" htmlFor="destination">
           <input
             id="destination"
@@ -113,9 +119,13 @@ export default function Home() {
           />
         </Field>
 
-        {/* Days + Budget side by side on the 8pt grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Days" htmlFor="days">
+        {/*
+         * Days + Budget:
+         * Mobile  → flex-col (each input full width, stacked)
+         * sm+     → flex-row (side by side, equal width)
+         */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Field label="Days" htmlFor="days" className="flex-1">
             <input
               id="days"
               name="days"
@@ -129,7 +139,7 @@ export default function Home() {
             />
           </Field>
 
-          <Field label="Budget (USD)" htmlFor="budget">
+          <Field label="Budget (USD)" htmlFor="budget" className="flex-1">
             <input
               id="budget"
               name="budget"
@@ -144,6 +154,7 @@ export default function Home() {
           </Field>
         </div>
 
+        {/* Travel style — always full width */}
         <Field label="Travel Style" htmlFor="travel_style">
           <select
             id="travel_style"
@@ -162,10 +173,11 @@ export default function Home() {
           </select>
         </Field>
 
+        {/* Submit — full width */}
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 h-11 rounded-xl bg-accent text-white text-sm font-semibold tracking-wide hover:opacity-90 active:scale-[0.98] disabled:opacity-40 transition-all duration-150"
+          className="w-full mt-2 h-11 rounded-xl bg-accent text-white text-sm font-semibold tracking-wide hover:opacity-90 active:scale-[0.98] disabled:opacity-40 transition-all duration-150"
         >
           {loading ? "Planning your trip…" : "Plan My Trip"}
         </button>
@@ -175,7 +187,7 @@ export default function Home() {
       {error && (
         <div
           role="alert"
-          className="mt-8 w-full max-w-md rounded-2xl bg-red-50 dark:bg-red-950/40 px-6 py-4 text-sm text-red-700 dark:text-red-300 leading-relaxed"
+          className="flex w-full max-w-md mt-8 rounded-2xl bg-red-50 dark:bg-red-950/40 px-6 py-4 text-sm text-red-700 dark:text-red-300 leading-relaxed"
         >
           {error}
         </div>
@@ -184,17 +196,21 @@ export default function Home() {
       {/* ── Result ── */}
       {result && (
         <section
-          className="mt-8 w-full max-w-2xl bg-surface rounded-2xl p-8"
+          className="flex flex-col w-full max-w-2xl mt-8 bg-surface rounded-2xl p-6 sm:p-8"
           style={{ boxShadow: "var(--shadow-elevated)" }}
         >
           {/* Title */}
-          <h2 className="text-2xl font-bold tracking-tight text-text-primary text-balance mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary text-balance mb-8">
             Your {result.days}-Day Trip to{" "}
             <span className="text-accent">{result.destination}</span>
           </h2>
 
-          {/* Stats grid — 8pt spacing */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          {/*
+           * Stats:
+           * Mobile  → flex-col (each stat card full width, stacked)
+           * sm+     → 2-column grid
+           */}
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 mb-8">
             <Stat
               label="Total Budget"
               value={`USD ${result.budget.toLocaleString()}`}
@@ -208,7 +224,7 @@ export default function Home() {
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-border mb-8" />
+          <div className="h-px w-full bg-border mb-8" />
 
           {/* Itinerary */}
           <h3 className="text-xs font-semibold tracking-[0.15em] uppercase text-text-muted mb-6">
@@ -234,14 +250,16 @@ const inputClass =
 function Field({
   label,
   htmlFor,
+  className = "",
   children,
 }: {
   label: string;
   htmlFor: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${className}`}>
       <label
         htmlFor={htmlFor}
         className="text-xs font-semibold tracking-wide uppercase text-text-muted"
