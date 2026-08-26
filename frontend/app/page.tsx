@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+/* ─── Types ──────────────────────────────────────────────────────────── */
+
 interface TripResult {
   id: number;
   destination: string;
@@ -26,6 +28,8 @@ const INITIAL_FORM: FormState = {
   days: "",
   travel_style: "General",
 };
+
+/* ─── Page ───────────────────────────────────────────────────────────── */
 
 export default function Home() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -59,7 +63,9 @@ export default function Home() {
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.detail ?? `Request failed with status ${response.status}`);
+        throw new Error(
+          err.detail ?? `Request failed with status ${response.status}`
+        );
       }
 
       const trip: TripResult = await response.json();
@@ -72,22 +78,29 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen px-4 py-12 bg-background text-foreground">
-      {/* Header */}
-      <h1 className="text-4xl font-bold mb-2 tracking-tight">KelanaAI</h1>
-      <p className="text-zinc-500 dark:text-zinc-400 mb-10 text-base">
-        AI-powered travel itinerary planner
-      </p>
+    <main className="flex flex-col items-center min-h-screen px-6 py-16 bg-background">
 
-      {/* Form */}
+      {/* ── Hero header ── */}
+      <header className="text-center mb-16 max-w-lg">
+        <p className="text-xs font-semibold tracking-[0.2em] uppercase text-accent mb-4">
+          AI Travel Planner
+        </p>
+        <h1 className="text-5xl font-bold tracking-tight text-text-primary text-balance mb-4">
+          KelanaAI
+        </h1>
+        <p className="text-base leading-relaxed text-text-secondary">
+          Describe your trip and get a personalised day-by-day itinerary,
+          powered by AI.
+        </p>
+      </header>
+
+      {/* ── Form card ── */}
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md flex flex-col gap-4 bg-white dark:bg-zinc-900 shadow-md rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800"
+        className="w-full max-w-md flex flex-col gap-6 bg-surface rounded-2xl p-8"
+        style={{ boxShadow: "var(--shadow-card)" }}
       >
-        <div className="flex flex-col gap-1">
-          <label htmlFor="destination" className="text-sm font-medium">
-            Destination
-          </label>
+        <Field label="Destination" htmlFor="destination">
           <input
             id="destination"
             name="destination"
@@ -96,54 +109,48 @@ export default function Home() {
             placeholder="e.g. Bali, Indonesia"
             value={form.destination}
             onChange={handleChange}
-            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-400"
+            className={inputClass}
           />
+        </Field>
+
+        {/* Days + Budget side by side on the 8pt grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Days" htmlFor="days">
+            <input
+              id="days"
+              name="days"
+              type="number"
+              required
+              min={1}
+              placeholder="e.g. 5"
+              value={form.days}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Budget (USD)" htmlFor="budget">
+            <input
+              id="budget"
+              name="budget"
+              type="number"
+              required
+              min={0}
+              placeholder="e.g. 2000"
+              value={form.budget}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="days" className="text-sm font-medium">
-            Number of Days
-          </label>
-          <input
-            id="days"
-            name="days"
-            type="number"
-            required
-            min={1}
-            placeholder="e.g. 5"
-            value={form.days}
-            onChange={handleChange}
-            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-400"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="budget" className="text-sm font-medium">
-            Budget (USD)
-          </label>
-          <input
-            id="budget"
-            name="budget"
-            type="number"
-            required
-            min={0}
-            placeholder="e.g. 2000"
-            value={form.budget}
-            onChange={handleChange}
-            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-400"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="travel_style" className="text-sm font-medium">
-            Travel Style
-          </label>
+        <Field label="Travel Style" htmlFor="travel_style">
           <select
             id="travel_style"
             name="travel_style"
             value={form.travel_style}
             onChange={handleChange}
-            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-400"
+            className={inputClass}
           >
             <option value="General">General</option>
             <option value="Adventure">Adventure</option>
@@ -153,39 +160,60 @@ export default function Home() {
             <option value="Budget">Budget</option>
             <option value="Luxury">Luxury</option>
           </select>
-        </div>
+        </Field>
 
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 rounded-full bg-foreground text-background py-2.5 text-sm font-semibold hover:opacity-80 disabled:opacity-40 transition-opacity"
+          className="mt-2 h-11 rounded-xl bg-accent text-white text-sm font-semibold tracking-wide hover:opacity-90 active:scale-[0.98] disabled:opacity-40 transition-all duration-150"
         >
           {loading ? "Planning your trip…" : "Plan My Trip"}
         </button>
       </form>
 
-      {/* Error */}
+      {/* ── Error ── */}
       {error && (
-        <div className="mt-6 w-full max-w-md rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-5 py-4 text-sm text-red-700 dark:text-red-300">
+        <div
+          role="alert"
+          className="mt-8 w-full max-w-md rounded-2xl bg-red-50 dark:bg-red-950/40 px-6 py-4 text-sm text-red-700 dark:text-red-300 leading-relaxed"
+        >
           {error}
         </div>
       )}
 
-      {/* Result */}
+      {/* ── Result ── */}
       {result && (
-        <section className="mt-8 w-full max-w-2xl bg-white dark:bg-zinc-900 shadow-md rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-xl font-semibold mb-4">
-            Your {result.days}-Day Trip to {result.destination}
+        <section
+          className="mt-8 w-full max-w-2xl bg-surface rounded-2xl p-8"
+          style={{ boxShadow: "var(--shadow-elevated)" }}
+        >
+          {/* Title */}
+          <h2 className="text-2xl font-bold tracking-tight text-text-primary text-balance mb-8">
+            Your {result.days}-Day Trip to{" "}
+            <span className="text-accent">{result.destination}</span>
           </h2>
 
-          <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
-            <Stat label="Total Budget" value={`USD ${result.budget.toLocaleString()}`} />
-            <Stat label="Daily Budget" value={`USD ${result.daily_budget.toLocaleString()}`} />
+          {/* Stats grid — 8pt spacing */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Stat
+              label="Total Budget"
+              value={`USD ${result.budget.toLocaleString()}`}
+            />
+            <Stat
+              label="Daily Budget"
+              value={`USD ${result.daily_budget.toLocaleString()}`}
+            />
             <Stat label="Category" value={result.category} />
             <Stat label="Travel Style" value={result.travel_style} />
           </div>
 
-          <h3 className="text-base font-semibold mb-2">AI Itinerary</h3>
+          {/* Divider */}
+          <div className="h-px bg-border mb-8" />
+
+          {/* Itinerary */}
+          <h3 className="text-xs font-semibold tracking-[0.15em] uppercase text-text-muted mb-6">
+            AI Itinerary
+          </h3>
           <Itinerary text={result.ai_recommendation} />
         </section>
       )}
@@ -193,30 +221,59 @@ export default function Home() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+/* ─── Shared input style ─────────────────────────────────────────────── */
+
+const inputClass =
+  "w-full rounded-xl bg-surface-raised text-text-primary placeholder:text-text-muted " +
+  "px-4 py-3 text-sm outline-none transition-shadow duration-150 " +
+  "focus:ring-2 focus:ring-accent/40 focus:bg-surface " +
+  "border-0 appearance-none";
+
+/* ─── Field wrapper ──────────────────────────────────────────────────── */
+
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800 px-4 py-3">
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="font-medium mt-0.5">{value}</span>
+    <div className="flex flex-col gap-2">
+      <label
+        htmlFor={htmlFor}
+        className="text-xs font-semibold tracking-wide uppercase text-text-muted"
+      >
+        {label}
+      </label>
+      {children}
     </div>
   );
 }
 
-// Strip all markdown syntax from a single line of text
-function stripInlineMarkdown(text: string): string {
+/* ─── Stat card ──────────────────────────────────────────────────────── */
+
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    text
-      // bold **text** or __text__
-      .replace(/\*\*(.+?)\*\*/g, "$1")
-      .replace(/__(.+?)__/g, "$1")
-      // italic *text* or _text_
-      .replace(/\*(.+?)\*/g, "$1")
-      .replace(/_(.+?)_/g, "$1")
-      // inline code `text`
-      .replace(/`(.+?)`/g, "$1")
-      // trim leftover whitespace
-      .trim()
+    <div className="flex flex-col rounded-2xl bg-surface-raised px-5 py-4">
+      <span className="text-xs text-text-muted mb-1">{label}</span>
+      <span className="text-sm font-semibold text-text-primary">{value}</span>
+    </div>
   );
+}
+
+/* ─── Itinerary renderer ─────────────────────────────────────────────── */
+
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/`(.+?)`/g, "$1")
+    .trim();
 }
 
 type ParsedLine =
@@ -224,33 +281,31 @@ type ParsedLine =
   | { type: "bullet"; text: string }
   | { type: "paragraph"; text: string };
 
-// Split the raw markdown string into structured lines
 function parseRecommendation(raw: string): ParsedLine[] {
   const lines = raw.split(/\r?\n/);
   const result: ParsedLine[] = [];
 
   for (const line of lines) {
     const trimmed = line.trim();
-
-    // skip empty lines
     if (!trimmed) continue;
 
-    // heading: ### / ## / #
     const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)/);
     if (headingMatch) {
       const level = headingMatch[1].length as 1 | 2 | 3;
-      result.push({ type: "heading", level, text: stripInlineMarkdown(headingMatch[2]) });
+      result.push({
+        type: "heading",
+        level,
+        text: stripInlineMarkdown(headingMatch[2]),
+      });
       continue;
     }
 
-    // bullet: lines starting with - , * , or a number like "1."
     const bulletMatch = trimmed.match(/^(?:[-*]|\d+\.)\s+(.+)/);
     if (bulletMatch) {
       result.push({ type: "bullet", text: stripInlineMarkdown(bulletMatch[1]) });
       continue;
     }
 
-    // everything else is a paragraph
     result.push({ type: "paragraph", text: stripInlineMarkdown(trimmed) });
   }
 
@@ -261,27 +316,53 @@ function Itinerary({ text }: { text: string }) {
   const lines = parseRecommendation(text);
 
   return (
-    <div className="flex flex-col gap-1.5 text-sm text-zinc-700 dark:text-zinc-300">
+    <div className="flex flex-col gap-2">
       {lines.map((line, i) => {
         if (line.type === "heading") {
-          const baseClass = "font-semibold text-zinc-900 dark:text-zinc-100 mt-4 mb-1";
-          if (line.level === 1)
-            return <p key={i} className={`${baseClass} text-base`}>{line.text}</p>;
-          if (line.level === 2)
-            return <p key={i} className={`${baseClass} text-sm`}>{line.text}</p>;
-          return <p key={i} className={`${baseClass} text-xs uppercase tracking-wide`}>{line.text}</p>;
+          if (line.level === 1) {
+            return (
+              <p
+                key={i}
+                className="mt-6 mb-1 text-base font-semibold tracking-tight text-text-primary"
+              >
+                {line.text}
+              </p>
+            );
+          }
+          if (line.level === 2) {
+            return (
+              <p
+                key={i}
+                className="mt-4 mb-1 text-sm font-semibold text-accent"
+              >
+                {line.text}
+              </p>
+            );
+          }
+          return (
+            <p
+              key={i}
+              className="mt-3 text-xs font-semibold tracking-[0.12em] uppercase text-text-muted"
+            >
+              {line.text}
+            </p>
+          );
         }
 
         if (line.type === "bullet") {
           return (
-            <div key={i} className="flex gap-2 leading-6">
-              <span className="mt-1 shrink-0 w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500 self-start translate-y-1.5" />
-              <span>{line.text}</span>
+            <div key={i} className="flex items-start gap-3 leading-relaxed">
+              <span className="mt-[0.45rem] shrink-0 w-1 h-1 rounded-full bg-accent" />
+              <span className="text-sm text-text-secondary">{line.text}</span>
             </div>
           );
         }
 
-        return <p key={i} className="leading-6">{line.text}</p>;
+        return (
+          <p key={i} className="text-sm leading-relaxed text-text-secondary">
+            {line.text}
+          </p>
+        );
       })}
     </div>
   );
