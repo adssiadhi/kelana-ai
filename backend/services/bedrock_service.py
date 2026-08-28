@@ -41,7 +41,7 @@ def get_ai_recommendation(
         destination:  The travel destination (e.g. "Bali, Indonesia").
         days:         Number of days for the trip.
         budget:       Total budget in USD.
-        travel_style: Travel style (e.g. "Adventure", "Relaxation", "Cultural").
+        travel_style: Travel style (e.g. "Family", "Couple", "Solo").
 
     Returns:
         The AI-generated itinerary as a plain string.

@@ -14,13 +14,9 @@ export interface Trip {
 export type TripCategory = "Backpacker" | "Standard" | "Luxury";
 
 export type TravelStyle =
-  | "General"
-  | "Adventure"
-  | "Relaxation"
-  | "Cultural"
   | "Family"
-  | "Budget"
-  | "Luxury";
+  | "Couple"
+  | "Solo";
 
 /* ─── Form state ─────────────────────────────────────────────────────── */
 
@@ -35,19 +31,15 @@ export const INITIAL_FORM: TripFormValues = {
   destination: "",
   days: "",
   budget: "",
-  travel_style: "General",
+  travel_style: "Family",
 };
 
 /* ─── Constants ──────────────────────────────────────────────────────── */
 
 export const TRAVEL_STYLES: TravelStyle[] = [
-  "General",
-  "Adventure",
-  "Relaxation",
-  "Cultural",
   "Family",
-  "Budget",
-  "Luxury",
+  "Couple",
+  "Solo",
 ];
 
 /** Maps category → Tailwind colour classes for badge rendering */
@@ -59,13 +51,9 @@ export const CATEGORY_COLORS: Record<TripCategory, string> = {
 
 /** Maps travel style → emoji for visual flair */
 export const STYLE_EMOJI: Record<TravelStyle, string> = {
-  General:     "🌍",
-  Adventure:   "🏔️",
-  Relaxation:  "🌴",
-  Cultural:    "🏛️",
-  Family:      "👨‍👩‍👧‍👦",
-  Budget:      "💰",
-  Luxury:      "✨",
+  Family: "👨‍👩‍👧‍👦",
+  Couple: "💑",
+  Solo:   "🎒",
 };
 
 export const FEATURED_DESTINATIONS = [
