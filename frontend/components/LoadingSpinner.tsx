@@ -5,7 +5,7 @@ interface LoadingSpinnerProps {
 }
 
 export default function LoadingSpinner({
-  message = "AI is crafting your itinerary…",
+  message = "Crafting your itinerary…",
 }: LoadingSpinnerProps) {
   return (
     <div
