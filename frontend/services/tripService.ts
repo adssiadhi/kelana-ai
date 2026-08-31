@@ -1,4 +1,5 @@
 import { Trip } from "@/lib/types";
+import { getToken } from "@/lib/auth";
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
 
@@ -17,28 +18,23 @@ export interface DeleteResponse {
   message: string;
 }
 
-/* ─── Base URL ───────────────────────────────────────────────────────── */
-/*
- * In the browser, requests go through Next.js rewrites (/api/v1/* → :8000).
- * NEXT_PUBLIC_API_URL can override this for e.g. a deployed environment
- * where the rewrite is not available.
- */
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+/* ─── Helper ─────────────────────────────────────────────────────────── */
 
-/* ─── Helpers ────────────────────────────────────────────────────────── */
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
 
-async function request<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
+  const { headers: callerHeaders, ...restInit } = init ?? {};
+
+  const res = await fetch(path, {
+    ...restInit,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(callerHeaders as Record<string, string> ?? {}),
+    },
   });
 
   if (!res.ok) {
-    // Surface FastAPI error detail when available
     let detail = `Request failed (${res.status})`;
     try {
       const body = await res.json();
@@ -53,42 +49,36 @@ async function request<T>(
 /* ─── Service ────────────────────────────────────────────────────────── */
 
 export const tripService = {
-  /** Fetch all trips */
   getTrips(): Promise<Trip[]> {
-    return request<Trip[]>("/api/v1/trips");
+    return request<Trip[]>("/api/trips");
   },
 
-  /** Fetch a single trip by id */
   getTrip(id: number): Promise<Trip> {
-    return request<Trip>(`/api/v1/trips/${id}`);
+    return request<Trip>(`/api/trips/${id}`);
   },
 
-  /** Create a new trip and get AI itinerary */
   createTrip(data: TripInput): Promise<Trip> {
-    return request<Trip>("/api/v1/trips", {
+    return request<Trip>("/api/trips", {
       method: "POST",
       body:   JSON.stringify(data),
     });
   },
 
-  /** Update the budget of an existing trip (re-runs AI) */
   updateBudget(id: number, data: BudgetUpdateInput): Promise<Trip> {
-    return request<Trip>(`/api/v1/trips/${id}`, {
+    return request<Trip>(`/api/trips/${id}`, {
       method: "PUT",
       body:   JSON.stringify(data),
     });
   },
 
-  /** Delete a trip */
   deleteTrip(id: number): Promise<DeleteResponse> {
-    return request<DeleteResponse>(`/api/v1/trips/${id}`, {
+    return request<DeleteResponse>(`/api/trips/${id}`, {
       method: "DELETE",
     });
   },
 
-  /** Re-generate the AI itinerary for an existing trip */
   generateItinerary(id: number): Promise<Trip> {
-    return request<Trip>(`/api/v1/trips/${id}/generate`, {
+    return request<Trip>(`/api/trips/${id}/generate`, {
       method: "POST",
     });
   },

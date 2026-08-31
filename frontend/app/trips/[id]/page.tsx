@@ -8,66 +8,10 @@ import {
 } from "lucide-react";
 import ErrorMessage from "@/components/ErrorMessage";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import MarkdownItinerary from "@/components/MarkdownItinerary";
 import { Trip, CATEGORY_COLORS, STYLE_EMOJI } from "@/lib/types";
 import { tripService } from "@/services/tripService";
-
-/* ─── Markdown parser ────────────────────────────────────────────────── */
-
-function stripInline(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/__(.+?)__/g,     "$1")
-    .replace(/\*(.+?)\*/g,     "$1")
-    .replace(/_(.+?)_/g,       "$1")
-    .replace(/`(.+?)`/g,       "$1")
-    .trim();
-}
-
-type Line =
-  | { type: "h1" | "h2" | "h3"; text: string }
-  | { type: "bullet";            text: string }
-  | { type: "para";              text: string };
-
-function parseItinerary(raw: string): Line[] {
-  const out: Line[] = [];
-  for (const line of raw.split(/\r?\n/)) {
-    const t = line.trim();
-    if (!t) continue;
-    const hm = t.match(/^(#{1,3})\s+(.+)/);
-    if (hm) {
-      const level = hm[1].length;
-      out.push({ type: level === 1 ? "h1" : level === 2 ? "h2" : "h3", text: stripInline(hm[2]) });
-      continue;
-    }
-    const bm = t.match(/^(?:[-*]|\d+\.)\s+(.+)/);
-    if (bm) { out.push({ type: "bullet", text: stripInline(bm[1]) }); continue; }
-    out.push({ type: "para", text: stripInline(t) });
-  }
-  return out;
-}
-
-/** Converts parsed lines back to clean plain text for clipboard */
-function linesToPlainText(trip: Trip, lines: Line[]): string {
-  const header = [
-    `${trip.destination} — ${trip.days}-Day ${trip.travel_style} Trip`,
-    `Budget: $${trip.budget.toLocaleString()} ($${Math.round(trip.daily_budget)}/day) · Category: ${trip.category}`,
-    "",
-    "─".repeat(60),
-    "",
-  ].join("\n");
-
-  const body = lines
-    .map((l) => {
-      if (l.type === "h1") return `\n${"═".repeat(50)}\n${l.text.toUpperCase()}\n${"═".repeat(50)}`;
-      if (l.type === "h2") return `\n${l.text}`;
-      if (l.type === "h3") return `  ${l.text.toUpperCase()}`;
-      if (l.type === "bullet") return `  • ${l.text}`;
-      return l.text;
-    })
-    .join("\n");
-
-  return header + body;
-}
+import { useAuth } from "@/lib/auth";
 
 /* ─── Copy-to-clipboard hook ─────────────────────────────────────────── */
 
@@ -131,6 +75,7 @@ const PRINT_CSS = `
 export default function TripDetailPage() {
   const { id }  = useParams<{ id: string }>();
   const router  = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const printStyleRef = useRef<HTMLStyleElement | null>(null);
 
   /* Inject print CSS once */
@@ -166,6 +111,11 @@ export default function TripDetailPage() {
 
   useEffect(() => { fetchTrip(); }, [fetchTrip]);
 
+  /* Auth guard */
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
+
   /* ── Regenerate ── */
   async function handleRegenerate() {
     setRegenerating(true);
@@ -199,8 +149,14 @@ export default function TripDetailPage() {
   }
 
   /* ── Derived ── */
-  const lines       = parseItinerary(trip?.ai_recommendation ?? "");
-  const plainText   = trip ? linesToPlainText(trip, lines) : "";
+  const plainText = trip
+    ? [
+        `${trip.destination} — ${trip.days}-Day ${trip.travel_style} Trip`,
+        `Budget: $${trip.budget.toLocaleString()} ($${Math.round(trip.daily_budget)}/day) · Category: ${trip.category}`,
+        "",
+        trip.ai_recommendation ?? "",
+      ].join("\n")
+    : "";
   const { copied, copy: handleCopy } = useCopyToClipboard(plainText);
 
   const badgeClass  = trip
@@ -358,7 +314,7 @@ export default function TripDetailPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:ring-1 dark:ring-slate-800 p-6 sm:p-8">
             <LoadingSpinner />
           </div>
-        ) : lines.length > 0 ? (
+        ) : trip.ai_recommendation ? (
           <div
             data-print-card
             className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:ring-1 dark:ring-slate-800 p-6 sm:p-8"
@@ -388,7 +344,7 @@ export default function TripDetailPage() {
               </button>
             </div>
 
-            <ItineraryBody lines={lines} />
+            <MarkdownItinerary markdown={trip.ai_recommendation ?? ""} />
           </div>
         ) : (
           <div className="bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800 p-6 sm:p-8 text-center">
@@ -427,37 +383,4 @@ function StatCard({ icon, label, value }: {
   );
 }
 
-function ItineraryBody({ lines }: { lines: Line[] }) {
-  return (
-    <div className="flex flex-col gap-1.5 text-sm text-slate-700 dark:text-slate-300">
-      {lines.map((line, i) => {
-        if (line.type === "h1") return (
-          <p
-            key={i}
-            data-day-break
-            className="mt-7 mb-1 text-base font-bold tracking-tight text-slate-900 dark:text-slate-50 first:mt-0"
-          >
-            {line.text}
-          </p>
-        );
-        if (line.type === "h2") return (
-          <p key={i} className="mt-5 mb-0.5 text-sm font-semibold text-amber-700 dark:text-amber-400">
-            {line.text}
-          </p>
-        );
-        if (line.type === "h3") return (
-          <p key={i} className="mt-3 text-xs font-semibold tracking-[0.1em] uppercase text-slate-400 dark:text-slate-500">
-            {line.text}
-          </p>
-        );
-        if (line.type === "bullet") return (
-          <div key={i} className="flex items-start gap-2.5 leading-relaxed pl-2">
-            <span className="mt-[0.42rem] shrink-0 w-1 h-1 rounded-full bg-amber-600" />
-            <span>{line.text}</span>
-          </div>
-        );
-        return <p key={i} className="leading-relaxed">{line.text}</p>;
-      })}
-    </div>
-  );
-}
+function ItineraryBody_unused_delete_me() { return null; }
